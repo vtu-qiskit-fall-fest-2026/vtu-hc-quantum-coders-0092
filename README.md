@@ -42,72 +42,55 @@
 ## 👥 Team Members (GitHub IDs)
 
 > Members are added to this repository as **collaborators** and must accept the
-> GitHub invitation before they can push. Add your GitHub username below.
+> GitHub invitation before they can push.
 
 | # | Name | GitHub Username | Role |
 | :-- | :--- | :--- | :--- |
-| 1 | _Add your name_ | _your-github-username_ | _Team Lead_ |
-| 2 | _Add your name_ | _your-github-username_ | _Developer_ |
-| 3 | _Add your name_ | _your-github-username_ | _Developer_ |
-
-<!--
-Optional: add a plain list instead of the table above.
-- @username1
-- @username2
--->
+| 1 | Sugappriyan | SUGAN-2007 | Team Lead |
+| 2 | Udhaya Prakash | Udhaya-prakash007 | Developer |
+| 3 | Shakthi Bharathi D T | Tomcruise2711 | Developer |
 
 ---
 
 ## ❓ Problem Statement
 
-<!--
-State the problem you are solving. Be specific: what is broken or missing,
-who experiences it, and why does it matter. Link to the official problem
-statement from the brief if one applies.
--->
+**Problem:** Quantum machine learning (QML) is often claimed to outperform classical ML, but developers have no easy, fair way to test whether quantum actually helps on their own data. Most QML demos show a quantum model in isolation, with no classical baseline and no consideration of real hardware noise, so the claims are hard to trust.
 
-**Problem:** _Describe the problem in 2–3 sentences._
+**Why it matters:** Without honest, reproducible evaluation, teams either dismiss QML or adopt it on hype. A simple benchmarking tool helps developers decide when quantum is worth using, and when a classical model is the better choice.
 
-**Why it matters:** _Explain the impact or opportunity._
-
-**Track / Category:** _Online / Offline · Track 1 / Track 2 · <domain>_
+**Track / Category:** Online · Quantum + AI & ML
 
 ---
 
 ## 💡 Proposed Solution
 
-<!--
-Describe your solution. Keep it concrete: the core idea, the user flow, and
-the quantum/ML technique you are applying.
--->
+**Solution:** A web platform where a user uploads a small tabular dataset (or picks a sample one). The system trains quantum models (variational quantum classifier and quantum kernel SVM, run on Qiskit simulators) alongside classical baselines (SVM, random forest, small neural network) and compares them on accuracy, training time, parameter count, and robustness under simulated hardware noise. It then produces a plain-language verdict on whether quantum is worth using for that dataset.
 
-**Solution:** _In 2–3 sentences, describe what you built._
+**Key idea:** A fair, noise-aware, side-by-side QML vs classical ML benchmark with an honest verdict report.
 
-**Key idea:** _The one-line technical summary of your approach._
-
-**Why this works:** _How your approach addresses the problem statement._
+**Why this works:** It replaces hype with evidence. Every quantum model is judged against strong classical baselines on the same data and the same train/test split, and its accuracy is re-tested under realistic noise, so users see what would survive on near-term hardware.
 
 ---
 
 ## 🧩 Approach & Architecture
 
-<!--
-Walk through how it works. A simple pipeline diagram in text or Mermaid is ideal.
--->
-
 ```mermaid
 flowchart LR
-    A[Input Data] --> B[Preprocessing]
-    B --> C[Quantum Circuit / Model]
-    C --> D[Post-processing]
-    D --> E[Output]
+    A[Upload Dataset] --> B[Preprocessing]
+    B --> C1[Quantum Models<br/>VQC + Quantum Kernel]
+    B --> C2[Classical Baselines<br/>SVM / RF / NN]
+    C1 --> D[Noise Robustness Test]
+    C1 --> E[Metrics Comparison]
+    C2 --> E
+    D --> E
+    E --> F[Verdict + Dashboard]
 ```
 
-1. **Input** — _what data goes in and in what format_
-2. **Preprocessing** — _cleaning, feature extraction, encoding_
-3. **Quantum core** — _the circuit, ansatz, or algorithm used_
-4. **Post-processing** — _decoding, measurement, scoring_
-5. **Output** — _what the user finally gets_
+1. **Input** — a small tabular CSV (features + label), or a built-in sample dataset
+2. **Preprocessing** — cleaning, scaling, feature reduction to a qubit-friendly size, fixed train/test split shared by all models
+3. **Quantum core** — Variational Quantum Classifier (feature map + ansatz, trained with COBYLA/SPSA) and a quantum-kernel SVM, run on Qiskit Aer
+4. **Classical baselines + noise test** — SVM, random forest and a small neural network on the same split; the quantum models are re-evaluated under Aer noise models at increasing noise levels
+5. **Output** — a dashboard with side-by-side accuracy, training time, parameter count and a noise-vs-accuracy curve, plus a plain-language verdict ("quantum helps / doesn't help, and why")
 
 ---
 
@@ -116,9 +99,12 @@ flowchart LR
 | Layer | Technology |
 | :--- | :--- |
 | Language | Python 3.11+ |
-| Quantum SDK | Qiskit `>=1.0`, Qiskit Aer, Qiskit Runtime |
-| Optimisation | Qiskit Optimization / COBYLA / SPSA |
-| Simulation | AerSimulator (statevector / noisemodel) |
+| Quantum SDK | Qiskit `>=1.0`, Qiskit Aer, Qiskit Machine Learning |
+| Optimisation | COBYLA / SPSA |
+| Simulation | AerSimulator (statevector / noise model) |
+| Classical ML | scikit-learn |
+| Backend API | FastAPI |
+| Frontend | React dashboard with charts |
 | Environment | JupyterLab / VS Code, `venv` |
 | Version control | Git + GitHub |
 
@@ -130,18 +116,21 @@ flowchart LR
 vtu-hc-quantum-coders-0092/
 ├── README.md              # This file
 ├── requirements.txt       # Python dependencies
-├── pyproject.toml         # Project metadata (optional)
 ├── .gitignore
 ├── notebooks/             # Jupyter notebooks for experiments
 │   └── exploration.ipynb
 ├── src/
 │   ├── __init__.py
-│   ├── circuit.py         # Quantum circuit construction
-│   ├── optimizer.py       # Optimization loop
+│   ├── data.py            # Loading, preprocessing, splitting
+│   ├── classical.py       # Classical baseline models
+│   ├── quantum.py         # VQC and quantum-kernel models
+│   ├── noise.py           # Noise models and robustness sweep
+│   ├── verdict.py         # Metrics comparison and verdict logic
+│   ├── api.py             # FastAPI endpoints
 │   └── main.py            # Entry point
-├── data/                  # Datasets (use Git LFS for large files)
+├── frontend/              # React dashboard
+├── data/                  # Sample datasets (use Git LFS for large files)
 ├── tests/                 # Unit tests
-│   └── test_circuit.py
 └── docs/                  # Notes, diagrams, reports
 ```
 
@@ -221,7 +210,7 @@ git checkout -b feature/my-task
 
 # 3. Commit your work
 git add .
-git commit -m "feat: add variational circuit for the search problem"
+git commit -m "feat: add variational quantum classifier"
 
 # 4. Push the branch
 git push -u origin feature/my-task
@@ -270,8 +259,8 @@ git pull --rebase       # update your branch on top of main
 
 - [ ] Repository created and **public**
 - [ ] All team members added as **collaborators** and invitations accepted
-- [ ] `README.md` updated with project details, problem statement and solution
-- [ ] Team members listed under [Team Members](#-team-members-github-ids)
+- [x] `README.md` updated with project details, problem statement and solution
+- [x] Team members listed under [Team Members](#-team-members-github-ids)
 - [ ] `requirements.txt` committed and project runs from a clean clone
 - [ ] Code pushed to `main` and the latest `main` builds successfully
 - [ ] Notebooks committed with **cleared outputs** (or use `nbstrip`)
