@@ -16,8 +16,9 @@ from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_aer import AerSimulator
 from qiskit_aer.primitives import SamplerV2 as AerSampler
 from qiskit_machine_learning.algorithms import QSVC, VQC
-from qiskit_machine_learning.kernels import FidelityStatevectorKernel
+from qiskit_machine_learning.kernels import FidelityQuantumKernel, FidelityStatevectorKernel
 from qiskit_machine_learning.optimizers import COBYLA
+from qiskit_machine_learning.state_fidelities import ComputeUncompute
 
 
 def _get_feature_map(n_qubits: int, entanglement: bool, reps: int = 2) -> QuantumCircuit:
@@ -143,6 +144,9 @@ def train_vqc(
         "n_train_used": n_train_used,
         "circuit_depth": circuit_depth,
         "two_qubit_gate_count": two_qubit_gate_count,
+        "_model": vqc,
+        "_feature_map": feature_map,
+        "_ansatz": ansatz,
     }
 
 
@@ -214,7 +218,52 @@ def train_quantum_kernel_svm(
         "n_train_used": n_train_used,
         "circuit_depth": circuit_depth,
         "two_qubit_gate_count": two_qubit_gate_count,
+        "_model": qsvc,
+        "_feature_map": feature_map,
+        "_X_train": X_train_sub,
     }
+
+
+def predict_with_sampler(
+    model_result: Dict[str, Any],
+    X_test: np.ndarray,
+    sampler: Any,
+) -> List[int]:
+    """Re-evaluate an already trained quantum model on test points using a specified sampler.
+
+    Args:
+        model_result: Result dict from train_vqc or train_quantum_kernel_svm containing '_model'.
+        X_test: Test features to evaluate.
+        sampler: Primitive sampler (e.g. AerSampler with a NoiseModel).
+
+    Returns:
+        List of integer predictions.
+    """
+    model = model_result["_model"]
+    name = model_result["name"]
+
+    if name == "VQC":
+        orig_sampler = model.neural_network.sampler
+        try:
+            model.neural_network.sampler = sampler
+            preds = model.predict(X_test)
+        finally:
+            model.neural_network.sampler = orig_sampler
+        return [int(p) for p in preds]
+
+    elif name == "Quantum Kernel SVM":
+        feature_map = model_result["_feature_map"]
+        fidelity = ComputeUncompute(sampler=sampler)
+        noisy_kernel = FidelityQuantumKernel(feature_map=feature_map, fidelity=fidelity)
+        orig_kernel = model.quantum_kernel
+        try:
+            model.quantum_kernel = noisy_kernel
+            preds = model.predict(X_test)
+        finally:
+            model.quantum_kernel = orig_kernel
+        return [int(p) for p in preds]
+
+    raise ValueError(f"Unknown quantum model: {name}")
 
 
 def save_circuit_diagrams(out_dir: str | Path = "docs/") -> None:

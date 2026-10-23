@@ -35,7 +35,7 @@ def test_vqc_entanglement_and_keys():
     res_no_ent = train_vqc(data, entanglement=False, reps=1, maxiter=10, n_train=30, seed=42)
 
     for res in [res_ent, res_no_ent]:
-        assert set(res.keys()) == EXPECTED_KEYS
+        assert {k for k in res.keys() if not k.startswith("_")} == EXPECTED_KEYS
         assert res["type"] == "quantum"
         assert res["name"] == "VQC"
         assert 0.0 <= res["accuracy"] <= 1.0
@@ -63,7 +63,7 @@ def test_quantum_kernel_svm_entanglement_and_keys():
     res_no_ent = train_quantum_kernel_svm(data, entanglement=False, n_train=30, seed=42)
 
     for res in [res_ent, res_no_ent]:
-        assert set(res.keys()) == EXPECTED_KEYS
+        assert {k for k in res.keys() if not k.startswith("_")} == EXPECTED_KEYS
         assert res["type"] == "quantum"
         assert res["name"] == "Quantum Kernel SVM"
         assert 0.0 <= res["accuracy"] <= 1.0
