@@ -40,6 +40,8 @@ htmlcov/
 data/*
 !data/.gitkeep
 !data/sample.csv
+!data/DATASET.md
+!data/breast-cancer-wisconsin-data.csv
 
 # IDE / OS files
 .DS_Store
