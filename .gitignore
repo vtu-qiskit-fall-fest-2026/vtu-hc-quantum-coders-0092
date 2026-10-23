@@ -1,55 +1,47 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-*.egg-info/
-.eggs/
-build/
-dist/
-
-# Virtual environments
+# Virtual environment
+.venv
 .venv/
 venv/
 env/
-ENV/
 
-# Jupyter
+# Python cache & compiled files
+__pycache__/
+*.pyc
+*.py[cod]
+*$py.class
+*.so
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+secrets.yaml
+credentials.json
+*.pem
+*.key
+
+# Jupyter notebooks
+.ipynb_checkpoints
 .ipynb_checkpoints/
 *.nbconvert.ipynb
-profile_default/
-ipython_config.py
 
-# Testing / linting caches
+# Testing & linting caches
 .pytest_cache/
 .coverage
 htmlcov/
 .mypy_cache/
 .ruff_cache/
-.dmypy.json
 
-# Secrets and environment -- NEVER commit these
-.env
-.env.*
-*.pem
-*.key
-secrets.yaml
-credentials.json
-
-# Generated data and large artifacts
-*.h5
-*.hdf5
-*.npy
-*.npz
-*.qasm.out
-data/*.csv
-data/*.pkl
+# Data artifacts
+data/*
+!data/.gitkeep
 !data/sample.csv
 
-# Quantum backend output
-backend_provider_*.json
-
-# OS / editors
+# IDE / OS files
 .DS_Store
 Thumbs.db
 .idea/
